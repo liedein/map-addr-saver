@@ -108,16 +108,6 @@ export default function Home() {
   };
 
   const handleDownloadImage = async () => {
-    if (!selectedLocation) {
-      showToast('캡쳐할 위치가 선택되지 않았습니다.', 'error');
-      return;
-    }
-
-    if (isUsageLimitExceeded) {
-      showToast('오늘 조회 한도(100회)에 도달했습니다.', 'error');
-      return;
-    }
-
     setIsLoading(true);
     
     try {
@@ -158,9 +148,6 @@ export default function Home() {
       
       showToast('웹 페이지가 캡쳐되었습니다!');
       setIsLoading(false);
-      
-      // Refresh usage count
-      refetchUsage();
       
     } catch (error) {
       console.error('화면 캡쳐 실패:', error);
