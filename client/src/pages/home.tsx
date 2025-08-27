@@ -4,6 +4,7 @@ import LocationInfo from "@/components/LocationInfo";
 import ToastNotification from "@/components/ToastNotification";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { RefreshCw } from "lucide-react";
 
 export interface LocationData {
   lat: number;
@@ -107,70 +108,39 @@ export default function Home() {
     }
   };
 
-  const handleDownloadImage = async () => {
-    setIsLoading(true);
-    
-    try {
-      // Use html2canvas to capture the actual webpage
-      const html2canvas = await import('html2canvas');
-      
-      // Capture the entire body element
-      const canvas = await html2canvas.default(document.body, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#1F2937', // Dark background
-        scale: 1, // 1:1 scale
-        width: window.innerWidth,
-        height: window.innerHeight,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight
-      });
-      
-      // Download the captured image
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      
-      const filename = `${year}${month}${day}_${hours}${minutes}${seconds}_SCREENSHOT.png`;
-      
-      const link = document.createElement('a');
-      link.download = filename;
-      link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      showToast('웹 페이지가 캡쳐되었습니다!');
-      setIsLoading(false);
-      
-    } catch (error) {
-      console.error('화면 캡쳐 실패:', error);
-      showToast('화면 캡쳐에 실패했습니다.', 'error');
-      setIsLoading(false);
-    }
+  // Handle refresh button click
+  const handleRefresh = () => {
+    window.location.reload();
   };
+
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-50 flex flex-col">
       {/* Header */}
       <header className="bg-gray-800 shadow-lg border-b border-gray-700">
-        <div className="px-4 py-4">
-          <h1 className="text-xl font-semibold text-center text-gray-50" data-testid="header-title">
+        <div className="px-4 py-4 flex items-center justify-between">
+          <div className="flex-1"></div>
+          <h1 className="text-xl font-semibold text-gray-50 flex-1 text-center" data-testid="header-title">
             내 주변 주소 조회
           </h1>
+          <div className="flex-1 flex justify-end">
+            <button
+              onClick={handleRefresh}
+              className="p-2 text-gray-400 hover:text-gray-100 hover:bg-gray-700 rounded-lg transition-colors duration-200"
+              title="새로고침"
+              data-testid="refresh-button"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative">
-        {/* Map Section - 55% of screen height */}
-        <div className="relative" style={{ height: '55vh' }}>
+        {/* Map Section - 65% of screen height */}
+        <div className="relative" style={{ height: '65vh' }}>
           <KakaoMap
             initialLocation={currentLocation}
             selectedLocation={selectedLocation}
@@ -189,13 +159,12 @@ export default function Home() {
           )}
         </div>
 
-        {/* Info Section - 45% of screen height */}
-        <div className="bg-gray-800 border-t border-gray-700" style={{ height: '45vh' }}>
+        {/* Info Section - 35% of screen height */}
+        <div className="bg-gray-800 border-t border-gray-700" style={{ height: '35vh' }}>
           <LocationInfo
             location={selectedLocation}
             usageCount={usageCount}
             onCopy={handleCopyToClipboard}
-            onDownload={handleDownloadImage}
             isLoading={isLoading}
             data-testid="location-info"
           />
