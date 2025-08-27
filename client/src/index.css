@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(222 84% 4.9%);
+  --foreground: hsl(210 40% 98%);
+  --card: hsl(222 84% 4.9%);
+  --card-foreground: hsl(210 40% 98%);
+  --popover: hsl(222 84% 4.9%);
+  --popover-foreground: hsl(210 40% 98%);
+  --primary: hsl(210 40% 98%);
+  --primary-foreground: hsl(222 84% 4.9%);
+  --secondary: hsl(217 32.6% 17.5%);
+  --secondary-foreground: hsl(210 40% 98%);
+  --muted: hsl(217 32.6% 17.5%);
+  --muted-foreground: hsl(215 20.2% 65.1%);
+  --accent: hsl(217 32.6% 17.5%);
+  --accent-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(217 32.6% 17.5%);
+  --input: hsl(217 32.6% 17.5%);
+  --ring: hsl(212 72% 59%);
+  --chart-1: hsl(220 70% 50%);
+  --chart-2: hsl(160 60% 45%);
+  --chart-3: hsl(30 80% 55%);
+  --chart-4: hsl(280 65% 60%);
+  --chart-5: hsl(340 75% 55%);
+  --radius: 0.5rem;
+  
+  /* Custom colors for the app */
+  --gray-50: hsl(210 20% 98%);
+  --gray-100: hsl(220 14.3% 95.9%);
+  --gray-200: hsl(220 13% 91%);
+  --gray-300: hsl(216 12.2% 83.9%);
+  --gray-400: hsl(218 10.6% 64.9%);
+  --gray-500: hsl(220 8.9% 46.1%);
+  --gray-600: hsl(215 13.8% 34.1%);
+  --gray-700: hsl(217 19.1% 26.7%);
+  --gray-800: hsl(215 27.9% 16.9%);
+  --gray-900: hsl(222 84% 4.9%);
+  --gray-950: hsl(229 84% 2.9%);
+  
+  --emerald-400: hsl(166 76% 56%);
+  --emerald-500: hsl(158 64% 52%);
+  --emerald-600: hsl(158 64% 42%);
+  --emerald-700: hsl(158 64% 32%);
+  
+  --blue-600: hsl(221 83% 53%);
+  --blue-700: hsl(221 83% 43%);
+  
+  --red-500: hsl(0 84% 60%);
+}
+
+.dark {
+  --background: hsl(222 84% 4.9%);
+  --foreground: hsl(210 40% 98%);
+  --card: hsl(222 84% 4.9%);
+  --card-foreground: hsl(210 40% 98%);
+  --popover: hsl(222 84% 4.9%);
+  --popover-foreground: hsl(210 40% 98%);
+  --primary: hsl(210 40% 98%);
+  --primary-foreground: hsl(222 84% 4.9%);
+  --secondary: hsl(217 32.6% 17.5%);
+  --secondary-foreground: hsl(210 40% 98%);
+  --muted: hsl(217 32.6% 17.5%);
+  --muted-foreground: hsl(215 20.2% 65.1%);
+  --accent: hsl(217 32.6% 17.5%);
+  --accent-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(217 32.6% 17.5%);
+  --input: hsl(217 32.6% 17.5%);
+  --ring: hsl(212 72% 59%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  }
+}
+
+/* Custom utility classes */
+.bg-gray-900 {
+  background-color: var(--gray-900);
+}
+
+.bg-gray-800 {
+  background-color: var(--gray-800);
+}
+
+.bg-gray-700 {
+  background-color: var(--gray-700);
+}
+
+.text-gray-50 {
+  color: var(--gray-50);
+}
+
+.text-gray-100 {
+  color: var(--gray-100);
+}
+
+.text-gray-400 {
+  color: var(--gray-400);
+}
+
+.border-gray-700 {
+  border-color: var(--gray-700);
+}
+
+.bg-emerald-600 {
+  background-color: var(--emerald-600);
+}
+
+.hover\:bg-emerald-700:hover {
+  background-color: var(--emerald-700);
+}
+
+.text-emerald-400 {
+  color: var(--emerald-400);
+}
+
+.text-emerald-500 {
+  color: var(--emerald-500);
+}
+
+.bg-blue-600 {
+  background-color: var(--blue-600);
+}
+
+.hover\:bg-blue-700:hover {
+  background-color: var(--blue-700);
+}
+
+.text-red-500 {
+  color: var(--red-500);
+}
+
+/* Loading animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Toast animations */
+.toast-enter {
+  transform: translateY(-100px);
+  opacity: 0;
+}
+
+.toast-enter-active {
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 300ms ease-out, opacity 300ms ease-out;
+}
+
+.toast-exit {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast-exit-active {
+  transform: translateY(-100px);
+  opacity: 0;
+  transition: transform 300ms ease-in, opacity 300ms ease-in;
+}
