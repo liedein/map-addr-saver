@@ -121,40 +121,22 @@ export default function Home() {
     setIsLoading(true);
     
     try {
-      // Simple screen capture using canvas
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      // Use html2canvas to capture the actual webpage
+      const html2canvas = await import('html2canvas');
       
-      if (!ctx) {
-        throw new Error('Canvas context를 생성할 수 없습니다.');
-      }
-      
-      // Set canvas size to window size
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      
-      // Create a simple screenshot by capturing the current view
-      // Draw a background
-      ctx.fillStyle = '#1F2937';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw location information
-      ctx.fillStyle = '#F9FAFB';
-      ctx.font = '16px Arial';
-      ctx.textAlign = 'center';
-      
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      
-      ctx.fillText('위치 정보 스크린샷', centerX, centerY - 60);
-      ctx.fillText(`위도: ${selectedLocation.lat.toFixed(6)}`, centerX, centerY - 30);
-      ctx.fillText(`경도: ${selectedLocation.lng.toFixed(6)}`, centerX, centerY);
-      
-      if (selectedLocation.address) {
-        ctx.fillText(`주소: ${selectedLocation.address}`, centerX, centerY + 30);
-      }
-      
-      ctx.fillText(`캡쳐 시간: ${new Date().toLocaleString('ko-KR')}`, centerX, centerY + 60);
+      // Capture the entire body element
+      const canvas = await html2canvas.default(document.body, {
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#1F2937', // Dark background
+        scale: 1, // 1:1 scale
+        width: window.innerWidth,
+        height: window.innerHeight,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight
+      });
       
       // Download the captured image
       const now = new Date();
@@ -165,7 +147,7 @@ export default function Home() {
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
       
-      const filename = `${year}${month}${day}_${hours}${minutes}${seconds}_LOCATION.png`;
+      const filename = `${year}${month}${day}_${hours}${minutes}${seconds}_SCREENSHOT.png`;
       
       const link = document.createElement('a');
       link.download = filename;
@@ -174,8 +156,11 @@ export default function Home() {
       link.click();
       document.body.removeChild(link);
       
-      showToast('위치 정보가 캡쳐되었습니다!');
+      showToast('웹 페이지가 캡쳐되었습니다!');
       setIsLoading(false);
+      
+      // Refresh usage count
+      refetchUsage();
       
     } catch (error) {
       console.error('화면 캡쳐 실패:', error);
