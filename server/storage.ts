@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 export interface IStorage {
   getUsageByIpAndDate(ipAddress: string, date: string): Promise<UsageTracking | undefined>;
   createUsageRecord(usage: InsertUsageTracking): Promise<UsageTracking>;
-  updateUsageCount(id: string, count: number): Promise<UsageTracking>;
+  updateUsageCount(ipAddress: string, date: string, count: number): Promise<UsageTracking>;
 }
 
 export class MemStorage implements IStorage {
@@ -14,37 +14,43 @@ export class MemStorage implements IStorage {
     this.usageRecords = new Map();
   }
 
+  private getKey(ipAddress: string, date: string): string {
+    return `${ipAddress}|${date}`;
+  }
+
   async getUsageByIpAndDate(ipAddress: string, date: string): Promise<UsageTracking | undefined> {
-    return Array.from(this.usageRecords.values()).find(
-      (record) => record.ipAddress === ipAddress && record.date === date,
-    );
+    const key = this.getKey(ipAddress, date);
+    return this.usageRecords.get(key);
   }
 
   async createUsageRecord(insertUsage: InsertUsageTracking): Promise<UsageTracking> {
     const id = randomUUID();
     const now = new Date();
-    const usage: UsageTracking = { 
-      ...insertUsage, 
+    const usage: UsageTracking = {
+      ...insertUsage,
       id,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
-    this.usageRecords.set(id, usage);
+    const key = this.getKey(insertUsage.ipAddress, insertUsage.date);
+    this.usageRecords.set(key, usage);
     return usage;
   }
 
-  async updateUsageCount(id: string, count: number): Promise<UsageTracking> {
-    const existing = this.usageRecords.get(id);
+  async updateUsageCount(ipAddress: string, date: string, count: number): Promise<UsageTracking> {
+    const key = this.getKey(ipAddress, date);
+    const existing = this.usageRecords.get(key);
+
     if (!existing) {
       throw new Error("Usage record not found");
     }
-    
+
     const updated: UsageTracking = {
       ...existing,
       usageCount: count,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-    this.usageRecords.set(id, updated);
+    this.usageRecords.set(key, updated);
     return updated;
   }
 }
