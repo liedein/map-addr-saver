@@ -1,16 +1,14 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { coordinateToAddressSchema } from "@shared/schema";
 import axios from "axios";
 
-// IP 추출 함수 (Express Request 타입으로 명확화)
-function getClientIp(req: any): string {
-  // Express의 기본 req.ip를 우선 사용
-  if (req.ip) return req.ip;
-  
-  // 아래는 노드 http 기본 request에서 IP 가져오는 fallback
+// IP 추출 함수
+function getClientIp(req: Request): string {
   return (
+    req.ip ||
+    req.headers["x-forwarded-for"]?.toString().split(",")[0] ||
     req.connection?.remoteAddress ||
     req.socket?.remoteAddress ||
     req.connection?.socket?.remoteAddress ||
@@ -27,12 +25,7 @@ async function checkUsageLimit(ipAddress: string): Promise<{ allowed: boolean; c
   const existingUsage = await storage.getUsageByIpAndDate(ipAddress, today);
 
   if (!existingUsage) {
-    // 오늘 기록이 없으면 새로 생성 (0회 사용)
-    await storage.createUsageRecord({
-      ipAddress,
-      usageCount: 0,
-      date: today,
-    });
+    await storage.createUsageRecord({ ipAddress, usageCount: 0, date: today });
     return { allowed: true, currentCount: 0 };
   }
 
@@ -48,12 +41,7 @@ async function incrementUsageCount(ipAddress: string): Promise<number> {
   const existingUsage = await storage.getUsageByIpAndDate(ipAddress, today);
 
   if (!existingUsage) {
-    // 기록 없으면 1로 생성
-    await storage.createUsageRecord({
-      ipAddress,
-      usageCount: 1,
-      date: today,
-    });
+    await storage.createUsageRecord({ ipAddress, usageCount: 1, date: today });
     return 1;
   }
 
@@ -81,20 +69,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 정적 지도 이미지 생성 (SVG)
+  // 정적 지도 이미지 생성
   app.post("/api/static-map", async (req, res) => {
     try {
       const ipAddress = getClientIp(req);
-
-      // 사용량 체크
       const { allowed } = await checkUsageLimit(ipAddress);
+
       if (!allowed) {
         return res.status(429).json({
           message: "Daily usage limit exceeded (100 requests per day)",
         });
       }
 
-      // 요청 유효성 검사
       const parseResult = coordinateToAddressSchema.safeParse(req.body);
       if (!parseResult.success) {
         return res.status(400).json({
@@ -105,10 +91,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { lat, lng } = parseResult.data;
 
-      // SVG 이미지 생성
       const width = 800;
       const height = 600;
-
       const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
   <rect width="100%" height="100%" fill="#1F2937"/>
@@ -136,7 +120,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   </text>
 </svg>`;
 
-      // 사용량 증가
       await incrementUsageCount(ipAddress);
 
       const buffer = Buffer.from(svgContent, "utf8");
@@ -152,20 +135,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 좌표 -> 주소 변환 API (카카오 REST API 사용)
+  // 좌표 → 주소 변환
   app.post("/api/coordinate-to-address", async (req, res) => {
     try {
       const ipAddress = getClientIp(req);
-
-      // 사용량 체크
       const { allowed } = await checkUsageLimit(ipAddress);
+
       if (!allowed) {
         return res.status(429).json({
           message: "Daily usage limit exceeded (100 requests per day)",
         });
       }
 
-      // 요청 유효성 검사
       const parseResult = coordinateToAddressSchema.safeParse(req.body);
       if (!parseResult.success) {
         return res.status(400).json({
@@ -175,14 +156,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { lat, lng } = parseResult.data;
-
       const kakaoRestApiKey = process.env.KAKAO_REST_API_KEY || "";
+
       if (!kakaoRestApiKey) {
-        console.warn("Warning: KAKAO_REST_API_KEY is not set in environment variables.");
-        return res.status(500).json({ message: "Server configuration error: missing API key" });
+        console.warn("KAKAO_REST_API_KEY is not set.");
+        return res.status(500).json({ message: "Missing Kakao API key" });
       }
 
-      // 카카오 API 호출
       const response = await axios.get(
         "https://dapi.kakao.com/v2/local/geo/coord2address.json",
         {
@@ -207,29 +187,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         document.road_address?.address_name ||
         "주소를 찾을 수 없습니다";
 
-      // 사용량 증가
-      const newCount = await incrementUsageCount(ipAddress);
+      const usageCount = await incrementUsageCount(ipAddress);
 
       res.json({
         address,
         lat,
         lng,
-        usageCount: newCount,
+        usageCount,
       });
     } catch (error) {
       console.error("Error converting coordinates to address:", error);
+
       if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
+        const status = error.response?.status || 500;
+
         if (status === 401) {
-          res.status(500).json({ message: "API authentication failed" });
+          return res.status(500).json({ message: "Kakao API 인증 실패" });
         } else if (status === 429) {
-          res.status(429).json({ message: "API rate limit exceeded" });
+          return res.status(429).json({ message: "Kakao API 요청 한도 초과" });
         } else {
-          res.status(500).json({ message: "External API error" });
+          return res.status(500).json({ message: "Kakao API 오류" });
         }
-      } else {
-        res.status(500).json({ message: "Failed to convert coordinates to address" });
       }
+
+      res.status(500).json({ message: "Failed to convert coordinates to address" });
     }
   });
 

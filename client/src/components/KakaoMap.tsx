@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { LocationData } from '@/pages/home';
 
 interface KakaoMapProps {
@@ -24,10 +24,24 @@ export default function KakaoMap({
   const mapInstance = useRef<any>(null);
   const markerInstance = useRef<any>(null);
 
+  const addMarker = useCallback((lat: number, lng: number) => {
+    if (!mapInstance.current || !window.kakao) return;
+
+    if (markerInstance.current) {
+      markerInstance.current.setMap(null);
+    }
+
+    const markerPosition = new window.kakao.maps.LatLng(lat, lng);
+    markerInstance.current = new window.kakao.maps.Marker({
+      position: markerPosition,
+    });
+
+    markerInstance.current.setMap(mapInstance.current);
+  }, []);
+
   useEffect(() => {
     if (!window.kakao || !mapRef.current) return;
 
-    // Initialize map
     const defaultLat = initialLocation?.lat || 37.5665;
     const defaultLng = initialLocation?.lng || 126.9780;
 
@@ -38,55 +52,27 @@ export default function KakaoMap({
 
     mapInstance.current = new window.kakao.maps.Map(mapRef.current, mapOption);
 
-    // Add click event listener
     window.kakao.maps.event.addListener(mapInstance.current, 'click', (mouseEvent: any) => {
       const latLng = mouseEvent.latLng;
-      const lat = latLng.getLat();
-      const lng = latLng.getLng();
-      
-      onLocationSelect({ lat, lng });
+      onLocationSelect({ lat: latLng.getLat(), lng: latLng.getLng() });
     });
 
-    // Add initial marker if location exists
     if (initialLocation) {
       addMarker(initialLocation.lat, initialLocation.lng);
     }
+  }, [initialLocation, addMarker, onLocationSelect]);
 
-  }, [initialLocation]);
-
-  // Update marker when selected location changes
   useEffect(() => {
     if (selectedLocation && mapInstance.current) {
       addMarker(selectedLocation.lat, selectedLocation.lng);
-      
-      // Move map center to selected location
-      const moveLatLon = new window.kakao.maps.LatLng(selectedLocation.lat, selectedLocation.lng);
-      mapInstance.current.setCenter(moveLatLon);
+      mapInstance.current.setCenter(new window.kakao.maps.LatLng(selectedLocation.lat, selectedLocation.lng));
     }
-  }, [selectedLocation]);
-
-  const addMarker = (lat: number, lng: number) => {
-    if (!mapInstance.current || !window.kakao) return;
-
-    // Remove existing marker
-    if (markerInstance.current) {
-      markerInstance.current.setMap(null);
-    }
-
-    // Add new marker
-    const markerPosition = new window.kakao.maps.LatLng(lat, lng);
-    markerInstance.current = new window.kakao.maps.Marker({
-      position: markerPosition,
-    });
-
-    markerInstance.current.setMap(mapInstance.current);
-  };
+  }, [selectedLocation, addMarker]);
 
   return (
     <div className="relative w-full h-full">
       <div ref={mapRef} className="w-full h-full bg-gray-800" data-testid="map-container" />
       
-      {/* Loading Overlay */}
       {isLoading && (
         <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center" data-testid="loading-overlay">
           <div className="bg-gray-800 rounded-lg p-4 flex items-center space-x-3">
