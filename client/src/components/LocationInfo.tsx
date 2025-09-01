@@ -15,7 +15,7 @@ export default function LocationInfo({
   isLoading 
 }: LocationInfoProps) {
   return (
-    <div className="px-3 pt-3 pb-2 h-full flex flex-col">
+    <div className="px-3 pt-3 pb-2 flex flex-col">
       {/* Info Section */}
       <div className="space-y-2">
         {/* 위도 */}

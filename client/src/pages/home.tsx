@@ -160,7 +160,7 @@ export default function Home() {
         </div>
 
         {/* Info Section - 35% of screen height */}
-        <div className="bg-gray-800 border-t border-gray-700" style={{ height: '35vh' }}>
+        <div className="bg-gray-800 border-t border-gray-700 py-4">
           <LocationInfo
             location={selectedLocation}
             usageCount={usageCount}
