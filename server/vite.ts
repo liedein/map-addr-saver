@@ -5,6 +5,10 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
+import { fileURLToPath } from "url";  // 추가
+
+const __filename = fileURLToPath(import.meta.url);  // 추가
+const __dirname = path.dirname(__filename);         // 추가
 
 const viteLogger = createLogger();
 
@@ -45,14 +49,15 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
+      // 수정: import.meta.dirname 대신 __dirname 사용
       const clientTemplate = path.resolve(
-        import.meta.dirname,
+        __dirname,
         "..",
         "client",
         "index.html",
       );
 
-      // always reload the index.html file from disk incase it changes
+      // 항상 디스크에서 index.html 파일을 다시 읽음 (변경 감지용)
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
@@ -68,7 +73,8 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "dist", "public");
+  // 수정: import.meta.dirname 대신 __dirname 사용
+  const distPath = path.resolve(__dirname, "dist", "public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
