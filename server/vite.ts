@@ -1,8 +1,33 @@
+import express, { type Express } from "express";
+import fs from "fs";
+import path from "path";
+import { createServer as createViteServer, createLogger } from "vite";
+import type { Server } from "http";
+import viteConfig from "../vite.config"; // 상황에 따라 확장자 조정 필요
+import { nanoid } from "nanoid";
+import { fileURLToPath } from "url";
+
+// ESM 환경에서 __dirname 정의
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const viteLogger = createLogger();
+
+export function log(message: string, source = "express") {
+  const formattedTime = new Date().toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+  console.log(`${formattedTime} [${source}] ${message}`);
+}
+
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server: server as unknown as import("http").Server }, // 또는 hmr: { server },
-    allowedHosts: "all", // 타입 안전과 권장 설정
+    hmr: { server: server as unknown as import("http").Server },
+    allowedHosts: "all",
   };
 
   const vite = await createViteServer({
@@ -27,6 +52,7 @@ export async function setupVite(app: Express, server: Server) {
     try {
       const clientTemplate = path.resolve(__dirname, "..", "client", "index.html");
 
+      // 항상 최신 index.html 파일 읽기
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
@@ -41,5 +67,20 @@ export async function setupVite(app: Express, server: Server) {
       }
       next(e);
     }
+  });
+}
+
+export function serveStatic(app: Express) {
+  const distPath = path.resolve(__dirname, "dist", "public");
+  if (!fs.existsSync(distPath)) {
+    throw new Error(
+      `Could not find the build directory: ${distPath}, make sure to build the client first`
+    );
+  }
+  app.use(express.static(distPath));
+
+  // SPA 라우팅용, 존재하지 않는 경로일 때 index.html 반환
+  app.use("*", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
