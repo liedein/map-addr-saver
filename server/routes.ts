@@ -1,4 +1,4 @@
-import type { Express, Request } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { coordinateToAddressSchema } from "@shared/schema";
@@ -9,17 +9,18 @@ function getClientIp(req: Request): string {
   return (
     req.ip ||
     req.headers["x-forwarded-for"]?.toString().split(",")[0] ||
-    req.connection?.remoteAddress ||
-    req.socket?.remoteAddress ||
-    req.connection?.socket?.remoteAddress ||
+    // req.connection은 deprecated될 수 있으므로 최근 Express에서는 req.socket 사용 권장
+    (req.socket && req.socket.remoteAddress) ||
     "127.0.0.1"
   );
 }
 
+// 오늘 날짜 문자열 (YYYY-MM-DD)
 function getTodayDateString(): string {
   return new Date().toISOString().split("T")[0];
 }
 
+// 요청 사용량 확인
 async function checkUsageLimit(ipAddress: string): Promise<{ allowed: boolean; currentCount: number }> {
   const today = getTodayDateString();
   const existingUsage = await storage.getUsageByIpAndDate(ipAddress, today);
@@ -36,6 +37,7 @@ async function checkUsageLimit(ipAddress: string): Promise<{ allowed: boolean; c
   return { allowed: true, currentCount: existingUsage.usageCount };
 }
 
+// 사용량 증가
 async function incrementUsageCount(ipAddress: string): Promise<number> {
   const today = getTodayDateString();
   const existingUsage = await storage.getUsageByIpAndDate(ipAddress, today);
@@ -50,9 +52,10 @@ async function incrementUsageCount(ipAddress: string): Promise<number> {
   return newCount;
 }
 
+// 라우트 등록 (메인)
 export async function registerRoutes(app: Express): Promise<Server> {
-  // API 사용량 조회
-  app.get("/api/usage", async (req, res) => {
+  // API 사용량 조회 (GET)
+  app.get("/api/usage", async (req: Request, res: Response) => {
     try {
       const ipAddress = getClientIp(req);
       const today = getTodayDateString();
@@ -69,8 +72,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 정적 지도 이미지 생성
-  app.post("/api/static-map", async (req, res) => {
+  // 정적 지도 이미지 생성 (POST)
+  app.post("/api/static-map", async (req: Request, res: Response) => {
     try {
       const ipAddress = getClientIp(req);
       const { allowed } = await checkUsageLimit(ipAddress);
@@ -91,6 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { lat, lng } = parseResult.data;
 
+      // SVG 지도 생성
       const width = 800;
       const height = 600;
       const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
@@ -135,8 +139,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 좌표 → 주소 변환
-  app.post("/api/coordinate-to-address", async (req, res) => {
+  // 좌표 → 주소 변환 (POST)
+  app.post("/api/coordinate-to-address", async (req: Request, res: Response) => {
     try {
       const ipAddress = getClientIp(req);
       const { allowed } = await checkUsageLimit(ipAddress);
@@ -195,7 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lng,
         usageCount,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error converting coordinates to address:", error);
 
       if (axios.isAxiosError(error)) {

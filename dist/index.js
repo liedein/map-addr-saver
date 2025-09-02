@@ -44,32 +44,35 @@ var MemStorage = class {
 };
 var storage = new MemStorage();
 
-// shared/schema.ts
+// shared/schema.ts 스키마 정의
 import { pgTable, text, varchar, integer, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-var usageTracking = pgTable("usage_tracking", {
+
+export const usageTracking = pgTable("usage_tracking", {
   id: varchar("id").primaryKey(),
   ipAddress: text("ip_address").notNull(),
   usageCount: integer("usage_count").notNull().default(0),
-  date: text("date").notNull(),
-  // Store as YYYY-MM-DD format
+  date: text("date").notNull(), // YYYY-MM-DD 형식
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
-var insertUsageTrackingSchema = createInsertSchema(usageTracking).omit({
+
+export const insertUsageTrackingSchema = createInsertSchema(usageTracking).omit({
   id: true,
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
 });
-var coordinateToAddressSchema = z.object({
+
+export const coordinateToAddressSchema = z.object({
   lat: z.number(),
-  lng: z.number()
+  lng: z.number(),
 });
-var addressResponseSchema = z.object({
+
+export const addressResponseSchema = z.object({
   address: z.string(),
   lat: z.number(),
-  lng: z.number()
+  lng: z.number(),
 });
 
 // server/routes.ts

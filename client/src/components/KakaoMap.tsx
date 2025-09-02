@@ -1,5 +1,5 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { LocationData } from '@/pages/home';
+import { useEffect, useRef, useCallback } from "react";
+import { LocationData } from "@/pages/home";
 
 interface KakaoMapProps {
   initialLocation?: LocationData | null;
@@ -14,11 +14,11 @@ declare global {
   }
 }
 
-export default function KakaoMap({ 
-  initialLocation, 
-  selectedLocation, 
-  onLocationSelect, 
-  isLoading 
+export default function KakaoMap({
+  initialLocation,
+  selectedLocation,
+  onLocationSelect,
+  isLoading,
 }: KakaoMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
@@ -42,8 +42,8 @@ export default function KakaoMap({
   useEffect(() => {
     if (!window.kakao || !mapRef.current) return;
 
-    const defaultLat = initialLocation?.lat || 37.5665;
-    const defaultLng = initialLocation?.lng || 126.9780;
+    const defaultLat = initialLocation?.lat ?? 37.5665;
+    const defaultLng = initialLocation?.lng ?? 126.978;
 
     const mapOption = {
       center: new window.kakao.maps.LatLng(defaultLat, defaultLng),
@@ -52,31 +52,49 @@ export default function KakaoMap({
 
     mapInstance.current = new window.kakao.maps.Map(mapRef.current, mapOption);
 
-    window.kakao.maps.event.addListener(mapInstance.current, 'click', (mouseEvent: any) => {
-      const latLng = mouseEvent.latLng;
-      onLocationSelect({ lat: latLng.getLat(), lng: latLng.getLng() });
-    });
+    const clickListener = window.kakao.maps.event.addListener(
+      mapInstance.current,
+      "click",
+      (mouseEvent: any) => {
+        const latLng = mouseEvent.latLng;
+        onLocationSelect({ lat: latLng.getLat(), lng: latLng.getLng() });
+      }
+    );
 
     if (initialLocation) {
       addMarker(initialLocation.lat, initialLocation.lng);
     }
+
+    return () => {
+      if (clickListener) {
+        window.kakao.maps.event.removeListener(clickListener);
+      }
+    };
   }, [initialLocation, addMarker, onLocationSelect]);
 
   useEffect(() => {
     if (selectedLocation && mapInstance.current) {
       addMarker(selectedLocation.lat, selectedLocation.lng);
-      mapInstance.current.setCenter(new window.kakao.maps.LatLng(selectedLocation.lat, selectedLocation.lng));
+      mapInstance.current.setCenter(
+        new window.kakao.maps.LatLng(selectedLocation.lat, selectedLocation.lng)
+      );
     }
   }, [selectedLocation, addMarker]);
 
   return (
     <div className="relative w-full h-full">
       <div ref={mapRef} className="w-full h-full bg-gray-800" data-testid="map-container" />
-      
+
       {isLoading && (
-        <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center" data-testid="loading-overlay">
+        <div
+          className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center"
+          data-testid="loading-overlay"
+        >
           <div className="bg-gray-800 rounded-lg p-4 flex items-center space-x-3">
-            <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-500 border-t-transparent" data-testid="loading-spinner"></div>
+            <div
+              className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-500 border-t-transparent"
+              data-testid="loading-spinner"
+            ></div>
             <span className="text-sm font-medium text-gray-100" data-testid="loading-text">
               위치 정보를 가져오는 중...
             </span>

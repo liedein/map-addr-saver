@@ -54,7 +54,7 @@ export default function LocationInfo({
               className="text-sm bg-gray-700 px-3 py-2 rounded-md text-gray-100 leading-relaxed"
               data-testid="address-display"
             >
-              {hasAddress ? location!.address : '위치를 선택해주세요'}
+              {hasAddress ? location?.address : '위치를 선택해주세요'}
             </div>
           </div>
           <button

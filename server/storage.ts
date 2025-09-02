@@ -1,12 +1,14 @@
 import { type UsageTracking, type InsertUsageTracking } from "@shared/schema";
 import { randomUUID } from "crypto";
 
+// Storage 인터페이스 (id와 date 기반 관리)
 export interface IStorage {
   getUsageByIpAndDate(ipAddress: string, date: string): Promise<UsageTracking | undefined>;
   createUsageRecord(usage: InsertUsageTracking): Promise<UsageTracking>;
   updateUsageCount(ipAddress: string, date: string, count: number): Promise<UsageTracking>;
 }
 
+// 메모리 기반 Storage 구현
 export class MemStorage implements IStorage {
   private usageRecords: Map<string, UsageTracking>;
 

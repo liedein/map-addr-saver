@@ -12,8 +12,7 @@ export default defineConfig(async () => ({
   plugins: [
     react(),
     runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
+    ...(process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
       ? [
           (await import("@replit/vite-plugin-cartographer")).cartographer(),
         ]
@@ -23,7 +22,7 @@ export default defineConfig(async () => ({
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
       "@shared": path.resolve(__dirname, "shared"),
-      "@assets": path.resolve(__dirname, "attached_assets"),
+      "@assets": path.resolve(__dirname, "attached_assets"), // 역슬래시 제거
     },
   },
   root: path.resolve(__dirname, "client"),
@@ -34,7 +33,7 @@ export default defineConfig(async () => ({
   server: {
     fs: {
       strict: true,
-      deny: ["**/.*"],
+      deny: ["**/.*"], // 역슬래시 없이 와일드카드 패턴 사용
     },
   },
 }));

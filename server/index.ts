@@ -14,15 +14,16 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined;
+  let capturedJsonResponse: any;
 
-  // 원래 res.json 함수 저장
+  // 원래 res.json 함수 저장 및 바인딩
   const originalResJson = res.json.bind(res);
 
-  res.json = function (bodyJson, ...args) {
+  // 타입 캐스팅: res.json 시그니처 맞추기
+  res.json = ((bodyJson: any, ...args: any[]) => {
     capturedJsonResponse = bodyJson;
     return originalResJson(bodyJson, ...args);
-  };
+  }) as typeof res.json;
 
   res.on("finish", () => {
     const duration = Date.now() - start;
@@ -41,33 +42,38 @@ app.use((req, res, next) => {
   next();
 });
 
+// 비동기 진입점 try/catch 적용
 (async () => {
-  // API 라우트 등록 (비동기)
-  const server = await registerRoutes(app);
+  try {
+    // API 라우트 등록 (비동기)
+    const server = await registerRoutes(app);
 
-  // 에러 핸들러 미들웨어
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    // 에러 핸들러 미들웨어 (항상 마지막에!)
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      res.status(status).json({ message });
+      // throw err; => 프로덕션 서버 다운 방지 위해 주석 권장
+    });
 
-    res.status(status).json({ message });
-    // throw err;  => 프로덕션 서버 다운 방지를 위해 주석 처리 권장
-  });
-
-  if (process.env.NODE_ENV === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
-  const port = parseInt(process.env.PORT || "5000", 10);
-  server.listen(
-    {
-      port,
-      host: "0.0.0.0",
-    },
-    () => {
-      log(`serving on port ${port}`);
+    if (process.env.NODE_ENV === "development") {
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
     }
-  );
+
+    const port = parseInt(process.env.PORT || "5000", 10);
+    server.listen(
+      {
+        port,
+        host: "0.0.0.0",
+      },
+      () => {
+        log(`serving on port ${port}`);
+      }
+    );
+  } catch (err) {
+    log("Server initialization error:", err);
+    process.exit(1);
+  }
 })();
