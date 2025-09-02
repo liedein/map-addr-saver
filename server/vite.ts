@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 import type { Server } from "http";
-import viteConfig from "../vite.config"; // 상황에 따라 확장자 조정 필요
+import viteConfig from "../vite.config"; // 필요 시 확장자 조정
 import { nanoid } from "nanoid";
 import { fileURLToPath } from "url";
 
@@ -71,12 +71,15 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(__dirname, "dist", "public");
+  // __dirname: /app/dist (예시), 한 단계 위로 올라가서 dist/public 경로 지정
+  const distPath = path.resolve(__dirname, "..", "dist", "public");
+
   if (!fs.existsSync(distPath)) {
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
+
   app.use(express.static(distPath));
 
   // SPA 라우팅용, 존재하지 않는 경로일 때 index.html 반환
