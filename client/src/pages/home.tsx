@@ -26,7 +26,6 @@ export default function Home() {
   const { currentLocation, isLoadingLocation, locationError } = useGeolocation();
   const { usageCount, isUsageLimitExceeded, refetchUsage } = useUsageLimit();
 
-  // 토스트 알림 표시 함수
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type, isVisible: true });
     setTimeout(() => {
@@ -34,21 +33,18 @@ export default function Home() {
     }, 3000);
   };
 
-  // 위치정보 오류 감지 시 알림
   useEffect(() => {
     if (locationError) {
       showToast("위치 정보를 가져올 수 없습니다. 기본 위치로 설정됩니다.", "error");
     }
   }, [locationError]);
 
-  // 현재 위치 수신 시 초기 선택 위치 설정
   useEffect(() => {
     if (currentLocation && !selectedLocation) {
       setSelectedLocation(currentLocation);
     }
   }, [currentLocation, selectedLocation]);
 
-  // 위치 선택 처리 (주소 변환 API 호출)
   const handleLocationSelect = async (location: LocationData) => {
     if (isUsageLimitExceeded) {
       showToast("오늘 조회 한도(100회)에 도달했습니다.", "error");
@@ -85,7 +81,6 @@ export default function Home() {
     }
   };
 
-  // 클립보드 복사 처리
   const handleCopyToClipboard = async () => {
     if (!selectedLocation || !selectedLocation.address) {
       showToast("복사할 정보가 없습니다.", "error");
@@ -103,7 +98,6 @@ export default function Home() {
     }
   };
 
-  // 페이지 새로고침 처리
   const handleRefresh = () => {
     window.location.reload();
   };
@@ -112,12 +106,12 @@ export default function Home() {
     <div className="min-h-screen bg-gray-900 text-gray-50 flex flex-col">
       {/* Header */}
       <header className="bg-gray-800 shadow-lg border-b border-gray-700">
-        <div className="px-4 py-4 flex items-center justify-between">
-          <div className="flex-1"></div>
-          <h1 className="text-xl font-semibold text-gray-50 flex-1 text-center" data-testid="header-title">
+        <div className="flex w-full items-center px-4 py-4">
+          <div className="w-12" />
+          <h1 className="text-xl font-semibold text-gray-50 flex-grow text-center" data-testid="header-title">
             내 주변 주소 조회
           </h1>
-          <div className="flex-1 flex justify-end">
+          <div className="w-12 flex justify-end">
             <button
               onClick={handleRefresh}
               className="p-2 text-gray-400 hover:text-gray-100 hover:bg-gray-700 rounded-lg transition-colors duration-200"

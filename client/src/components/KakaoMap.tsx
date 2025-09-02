@@ -39,6 +39,7 @@ export default function KakaoMap({
     markerInstance.current.setMap(mapInstance.current);
   }, []);
 
+  // 최초 지도 생성은 컴포넌트 마운트 시 단 한 번만 수행
   useEffect(() => {
     if (!window.kakao || !mapRef.current) return;
 
@@ -72,6 +73,7 @@ export default function KakaoMap({
     };
   }, [initialLocation, addMarker, onLocationSelect]);
 
+  // 선택 위치 변경 시 지도 중심을 해당 위치로 이동
   useEffect(() => {
     if (selectedLocation && mapInstance.current) {
       addMarker(selectedLocation.lat, selectedLocation.lng);
