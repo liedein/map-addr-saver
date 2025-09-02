@@ -70,7 +70,7 @@ export default function KakaoMap({
         window.kakao.maps.event.removeListener(clickListener);
       }
     };
-  }, [initialLocation, addMarker, onLocationSelect]);
+  }, []); // 의존성 배열을 빈 배열로 변경하여 컴포넌트 마운트 시 딱 한 번만 실행됩니다.
 
   useEffect(() => {
     if (selectedLocation && mapInstance.current) {
@@ -83,7 +83,11 @@ export default function KakaoMap({
 
   return (
     <div className="relative w-full h-full">
-      <div ref={mapRef} className="w-full h-full bg-gray-800" data-testid="map-container" />
+      <div
+        ref={mapRef}
+        className="w-full h-full bg-gray-800"
+        data-testid="map-container"
+      />
 
       {isLoading && (
         <div
@@ -95,7 +99,10 @@ export default function KakaoMap({
               className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-500 border-t-transparent"
               data-testid="loading-spinner"
             ></div>
-            <span className="text-sm font-medium text-gray-100" data-testid="loading-text">
+            <span
+              className="text-sm font-medium text-gray-100"
+              data-testid="loading-text"
+            >
               위치 정보를 가져오는 중...
             </span>
           </div>
