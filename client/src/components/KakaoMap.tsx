@@ -24,7 +24,8 @@ function loadKakaoMapScript(): Promise<void> {
     script.id = "kakao-map-sdk";
     script.src =
       "https://dapi.kakao.com/v2/maps/sdk.js?appkey=fbd0a676a44c06de2ac503afd3aadb7b&libraries=services";
-    script.async = true;
+    // async 속성 제거하여 동기 로드
+    // script.async = true;  // 주석 처리 또는 삭제
     script.onload = () => resolve();
     script.onerror = () => reject(new Error("Kakao Map SDK 로드 실패"));
     document.head.appendChild(script);
