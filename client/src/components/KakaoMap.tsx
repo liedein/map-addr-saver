@@ -14,24 +14,6 @@ declare global {
   }
 }
 
-function loadKakaoMapScript(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (document.getElementById("kakao-map-sdk")) {
-      resolve();
-      return;
-    }
-    const script = document.createElement("script");
-    script.id = "kakao-map-sdk";
-    script.src =
-      "https://dapi.kakao.com/v2/maps/sdk.js?appkey=fbd0a676a44c06de2ac503afd3aadb7b&libraries=services";
-    // async 속성 제거하여 동기 로드
-    // script.async = true;  // 주석 처리 또는 삭제
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Kakao Map SDK 로드 실패"));
-    document.head.appendChild(script);
-  });
-}
-
 export default function KakaoMap({
   initialLocation,
   selectedLocation,
@@ -58,45 +40,36 @@ export default function KakaoMap({
   }, []);
 
   useEffect(() => {
-    loadKakaoMapScript()
-      .then(() => {
-        if (!window.kakao || !mapRef.current) return;
+    if (!window.kakao || !mapRef.current) return;
 
-        const defaultLat = initialLocation?.lat ?? 37.5665;
-        const defaultLng = initialLocation?.lng ?? 126.978;
+    const defaultLat = initialLocation?.lat ?? 37.5665;
+    const defaultLng = initialLocation?.lng ?? 126.978;
 
-        const mapOption = {
-          center: new window.kakao.maps.LatLng(defaultLat, defaultLng),
-          level: 2,
-        };
+    const mapOption = {
+      center: new window.kakao.maps.LatLng(defaultLat, defaultLng),
+      level: 2,
+    };
 
-        mapInstance.current = new window.kakao.maps.Map(
-          mapRef.current,
-          mapOption
-        );
+    mapInstance.current = new window.kakao.maps.Map(mapRef.current, mapOption);
 
-        const clickListener = window.kakao.maps.event.addListener(
-          mapInstance.current,
-          "click",
-          (mouseEvent: any) => {
-            const latLng = mouseEvent.latLng;
-            onLocationSelect({ lat: latLng.getLat(), lng: latLng.getLng() });
-          }
-        );
+    const clickListener = window.kakao.maps.event.addListener(
+      mapInstance.current,
+      "click",
+      (mouseEvent: any) => {
+        const latLng = mouseEvent.latLng;
+        onLocationSelect({ lat: latLng.getLat(), lng: latLng.getLng() });
+      }
+    );
 
-        if (initialLocation) {
-          addMarker(initialLocation.lat, initialLocation.lng);
-        }
+    if (initialLocation) {
+      addMarker(initialLocation.lat, initialLocation.lng);
+    }
 
-        return () => {
-          if (clickListener) {
-            window.kakao.maps.event.removeListener(clickListener);
-          }
-        };
-      })
-      .catch(() => {
-        console.error("Kakao Map SDK 로드 실패");
-      });
+    return () => {
+      if (clickListener) {
+        window.kakao.maps.event.removeListener(clickListener);
+      }
+    };
   }, [initialLocation, addMarker, onLocationSelect]);
 
   useEffect(() => {
