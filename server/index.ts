@@ -1,17 +1,17 @@
 import dotenv from "dotenv";
-dotenv.config();  // 1. .env 파일에서 환경 변수 로드
+dotenv.config(); // 1. .env 파일에서 환경 변수 로드
 
-import express, { type Request, Response, NextFunction } from "express";
+import express, { type Request, Response, NextFunction, type Express } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
-const app = express();
+const app: Express = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // 요청 로깅 미들웨어 (특히 /api 요청만)
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: any;
