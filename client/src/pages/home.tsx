@@ -126,8 +126,8 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative">
-        {/* Map Section - 65% of screen height */}
-        <div className="relative" style={{ height: "65vh" }}>
+        {/* Map Section - 높이 45.5vh */}
+        <div className="relative" style={{ height: "45.5vh" }}>
           <KakaoMap
             initialLocation={currentLocation}
             selectedLocation={selectedLocation}
@@ -149,7 +149,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Info Section - 35% of screen height */}
+        {/* Info Section */}
         <div className="bg-gray-800 border-t border-gray-700 py-4">
           <LocationInfo
             location={selectedLocation}
