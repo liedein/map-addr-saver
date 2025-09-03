@@ -4,7 +4,7 @@ import { LocationData } from "@/pages/home";
 interface KakaoMapProps {
   initialLocation?: LocationData | null;
   selectedLocation?: LocationData | null;
-  onLocationSelect: (location: LocationData) => void;
+  onLocationSelect?: (location: LocationData) => void;
   isLoading?: boolean;
 }
 
@@ -45,71 +45,39 @@ export default function KakaoMap({
 
     const defaultLat = initialLocation?.lat ?? 37.5665;
     const defaultLng = initialLocation?.lng ?? 126.978;
-
     const mapOption = {
       center: new window.kakao.maps.LatLng(defaultLat, defaultLng),
-      level: 2,
+      level: 3,
     };
 
     mapInstance.current = new window.kakao.maps.Map(mapRef.current, mapOption);
 
-    const clickListener = window.kakao.maps.event.addListener(
-      mapInstance.current,
-      "click",
-      (mouseEvent: any) => {
-        const latLng = mouseEvent.latLng;
-        onLocationSelect({ lat: latLng.getLat(), lng: latLng.getLng() });
+    // 지도 클릭 이벤트 등록
+    window.kakao.maps.event.addListener(mapInstance.current, "click", function (mouseEvent: any) {
+      const latlng = mouseEvent.latLng;
+      if (onLocationSelect) {
+        onLocationSelect({ lat: latlng.getLat(), lng: latlng.getLng() });
       }
-    );
+    });
 
-    if (initialLocation) {
-      addMarker(initialLocation.lat, initialLocation.lng);
-    }
-
-    return () => {
-      if (clickListener) {
-        window.kakao.maps.event.removeListener(clickListener);
-      }
-    };
-  }, [initialLocation, addMarker, onLocationSelect]);
-
-  // 선택 위치 변경 시 지도 중심을 해당 위치로 이동
-  useEffect(() => {
-    if (selectedLocation && mapInstance.current) {
+    // 최초 마커
+    if (selectedLocation) {
       addMarker(selectedLocation.lat, selectedLocation.lng);
-      mapInstance.current.setCenter(
-        new window.kakao.maps.LatLng(selectedLocation.lat, selectedLocation.lng)
-      );
+      mapInstance.current.setCenter(new window.kakao.maps.LatLng(selectedLocation.lat, selectedLocation.lng));
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  // selectedLocation이 바뀔 때마다 지도 중심과 마커 이동
+  useEffect(() => {
+    if (!window.kakao || !mapInstance.current) return;
+    if (selectedLocation) {
+      addMarker(selectedLocation.lat, selectedLocation.lng);
+      mapInstance.current.setCenter(new window.kakao.maps.LatLng(selectedLocation.lat, selectedLocation.lng));
     }
   }, [selectedLocation, addMarker]);
 
   return (
-    <div className="relative w-full h-full">
-      <div
-        ref={mapRef}
-        className="w-full h-full bg-gray-800"
-        data-testid="map-container"
-      />
-
-      {isLoading && (
-        <div
-          className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center"
-          data-testid="loading-overlay"
-        >
-          <div className="bg-gray-800 rounded-lg p-4 flex items-center space-x-3">
-            <div
-              className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-500 border-t-transparent"
-              data-testid="loading-spinner"
-            ></div>
-            <span
-              className="text-sm font-medium text-gray-100"
-              data-testid="loading-text"
-            >
-              위치 정보를 가져오는 중...
-            </span>
-          </div>
-        </div>
-      )}
-    </div>
+    <div ref={mapRef} className="w-full h-full rounded-lg overflow-hidden bg-gray-800" />
   );
 }
