@@ -11,13 +11,12 @@ const typeOptions = ["단독시설", "불법시설물", "특이동향"];
 export interface LocationData {
   lat: number;
   lng: number;
-  address?: string;
+  address: string;
 }
 
 export interface ToastData {
   message: string;
   type: "success" | "error";
-  isVisible: boolean;
 }
 
 export default function Home() {
@@ -27,52 +26,32 @@ export default function Home() {
   const [detail, setDetail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<ToastData | null>(null);
-
-  const { currentLocation, isLoading: isLoadingLocation } = useGeolocation();
-  const { usageCount, isUsageLimitExceeded, refetchUsage } = useUsageLimit();
-
-  useEffect(() => {
-    if (!selectedLocation && currentLocation) {
-      setSelectedLocation(currentLocation);
-    }
-  }, [currentLocation, selectedLocation]);
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [usageCount, incrementUsage] = useUsageLimit();
 
   const showToast = (message: string, type: "success" | "error") => {
-    setToast({ message, type, isVisible: true });
+    setToast({ message, type });
     setTimeout(() => setToast(null), 2000);
   };
 
-  const handleLocationSelect = async (location: LocationData) => {
-    if (isUsageLimitExceeded) {
-      showToast("오늘 조회 한도(100회)에 도달했습니다.", "error");
-      return;
-    }
-
+  const handleLocationSelect = async (loc: { lat: number; lng: number }) => {
     setIsLoading(true);
-
     try {
-      const response = await fetch("/api/coordinate-to-address", {
+      const res = await fetch("/api/coord-to-addr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lat: location.lat, lng: location.lng }),
+        body: JSON.stringify(loc),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "주소를 가져오는데 실패했습니다.");
+      const data = await res.json();
+      if (data?.address) {
+        setSelectedLocation({ ...loc, address: data.address });
+        incrementUsage();
+      } else {
+        showToast("주소를 찾을 수 없습니다.", "error");
+        setSelectedLocation({ ...loc, address: "" });
       }
-
-      const data = await response.json();
-      setSelectedLocation({
-        lat: location.lat,
-        lng: location.lng,
-        address: data.address,
-      });
-
-      refetchUsage();
-    } catch (error) {
-      console.error("주소 변환 오류:", error);
-      showToast(error instanceof Error ? error.message : "주소를 가져오는데 실패했습니다.", "error");
+    } catch (err) {
+      showToast("주소 변환 오류", "error");
     } finally {
       setIsLoading(false);
     }
@@ -101,32 +80,35 @@ export default function Home() {
     }
   };
 
-  const handleRefresh = () => {
-    window.location.reload();
-  };
+  // 현위치 가져오기 (최초 1회)
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          setCurrentLocation({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          });
+        },
+        err => {
+          showToast("위치 권한이 필요합니다.", "error");
+        }
+      );
+    }
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-50 flex flex-col">
-      {/* 헤더 */}
-      <header className="bg-gray-800 shadow-lg border-b border-gray-700">
-        <div className="flex w-full items-center px-4 py-4">
-          <div className="w-12" />
-          <h1 className="text-2xl font-bold text-gray-50 flex-grow text-center tracking-wide">
-            내 주변 주소 조회
-          </h1>
-          <div className="w-12 flex justify-end">
-            <button
-              onClick={handleRefresh}
-              className="p-2 text-gray-400 hover:text-gray-100 hover:bg-gray-700 rounded-lg transition-colors duration-200"
-              title="새로고침"
-            >
-              <RefreshCw className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-900 flex flex-col">
+      <header className="bg-gray-900 border-b border-gray-800 px-4 py-3 flex items-center justify-between">
+        <h1 className="text-lg font-bold text-white tracking-tight">내 주변 주소 조회</h1>
+        <button
+          className="text-gray-400 hover:text-white transition"
+          onClick={() => window.location.reload()}
+          aria-label="새로고침"
+        >
+          <RefreshCw className="w-5 h-5" />
+        </button>
       </header>
-
-      {/* 본문 */}
       <main className="flex-1 flex flex-col relative">
         {/* 지도 영역 */}
         <div className="relative" style={{ height: "38vh", minHeight: "270px" }}>
@@ -134,7 +116,7 @@ export default function Home() {
             initialLocation={currentLocation}
             selectedLocation={selectedLocation}
             onLocationSelect={handleLocationSelect}
-            isLoading={isLoading || isLoadingLocation}
+            isLoading={isLoading}
           />
           {selectedLocation?.address && (
             <div className="absolute bottom-4 left-4 bg-gray-800/90 backdrop-blur-sm border border-gray-700 rounded-lg px-3 py-2 max-w-xs shadow-lg">
@@ -174,7 +156,7 @@ export default function Home() {
           <div className="flex items-stretch space-x-2">
             <div className="flex flex-col flex-1 space-y-2">
               <div className="flex items-center">
-                <label className="text-sm text-gray-300 w-12 shrink-0">위도</label>
+                <label className="text-sm text-gray-300 w-18 shrink-0">위도</label>
                 <input
                   className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
                   value={selectedLocation ? selectedLocation.lat.toFixed(6) : ""}
@@ -182,7 +164,7 @@ export default function Home() {
                 />
               </div>
               <div className="flex items-center">
-                <label className="text-sm text-gray-300 w-12 shrink-0">경도</label>
+                <label className="text-sm text-gray-300 w-18 shrink-0">경도</label>
                 <input
                   className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
                   value={selectedLocation ? selectedLocation.lng.toFixed(6) : ""}
@@ -210,7 +192,7 @@ export default function Home() {
           </div>
           {/* 지번주소 */}
           <div className="flex items-center mb-1">
-            <label className="text-sm text-gray-300 w-12 shrink-0">지번주소</label>
+            <label className="text-sm text-gray-300 w-18 shrink-0">지번주소</label>
             <input
               className="text-base bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
               value={selectedLocation?.address || ""}
@@ -220,7 +202,7 @@ export default function Home() {
           </div>
           {/* 세부내역(2줄 textarea, 밝은회색 bg, placeholder 삭제) */}
           <div className="flex items-start">
-            <label className="text-sm text-gray-300 w-12 shrink-0 mt-2">세부내역</label>
+            <label className="text-sm text-gray-300 w-18 shrink-0 mt-2">세부내역</label>
             <textarea
               maxLength={100}
               rows={2}
