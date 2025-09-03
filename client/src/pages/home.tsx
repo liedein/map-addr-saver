@@ -147,73 +147,70 @@ export default function Home() {
 
         {/* 입력 폼 영역 */}
         <div className="bg-gray-800 border-t border-gray-700 pt-5 pb-4 px-2 flex flex-col space-y-3">
-          {/* 통신사/유형 */}
+          {/* 통신사/유형 드롭다운 (레이블 없이) */}
           <div className="flex items-center space-x-3">
-            <div className="flex flex-col flex-1">
-              <label className="text-sm text-gray-300 mb-1 ml-1">통신사</label>
-              <select
-                className="bg-gray-700 text-gray-100 px-3 py-2 rounded-md"
-                value={telco}
-                onChange={e => setTelco(e.target.value)}
-              >
-                <option value="">선택</option>
-                {telcoOptions.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col flex-1">
-              <label className="text-sm text-gray-300 mb-1 ml-1">유형</label>
-              <select
-                className="bg-gray-700 text-gray-100 px-3 py-2 rounded-md"
-                value={type}
-                onChange={e => setType(e.target.value)}
-              >
-                <option value="">선택</option>
-                {typeOptions.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              className="bg-gray-700 text-gray-100 px-3 py-2 rounded-md flex-1"
+              value={telco}
+              onChange={e => setTelco(e.target.value)}
+            >
+              <option value="">통신사</option>
+              {telcoOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            <select
+              className="bg-gray-700 text-gray-100 px-3 py-2 rounded-md flex-1"
+              value={type}
+              onChange={e => setType(e.target.value)}
+            >
+              <option value="">유형</option>
+              {typeOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
           </div>
-          {/* 위도 */}
-          <div className="flex items-center mb-1">
-            <label className="text-sm text-gray-300 w-16 shrink-0 ml-1">위도</label>
-            <input
-              className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
-              value={selectedLocation ? selectedLocation.lat.toFixed(6) : ""}
-              readOnly
-            />
+          {/* 위도/경도 + 복사버튼 */}
+          <div className="flex items-stretch space-x-2">
+            <div className="flex flex-col flex-1 space-y-2">
+              <div className="flex items-center">
+                <label className="text-sm text-gray-300 w-12 shrink-0">위도</label>
+                <input
+                  className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
+                  value={selectedLocation ? selectedLocation.lat.toFixed(6) : ""}
+                  readOnly
+                />
+              </div>
+              <div className="flex items-center">
+                <label className="text-sm text-gray-300 w-12 shrink-0">경도</label>
+                <input
+                  className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
+                  value={selectedLocation ? selectedLocation.lng.toFixed(6) : ""}
+                  readOnly
+                />
+              </div>
+            </div>
             <button
               onClick={handleCopyToClipboard}
               aria-label="클립보드 복사"
               disabled={!selectedLocation?.address || !telco || !type || isLoading}
-              className="ml-2 flex flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-0 py-0 rounded-md transition-colors duration-200 h-[56px] w-[64px] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md transition-colors duration-200 w-[60px] h-full disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 fontSize: "1.15rem",
                 minWidth: "54px",
-                minHeight: "56px",
+                minHeight: "86px", // 위도+경도 입력창 합친 높이와 맞춤
               }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <rect x="9" y="9" width="13" height="13" rx="2" strokeWidth="2" stroke="currentColor" fill="none"/>
                 <rect x="3" y="3" width="13" height="13" rx="2" strokeWidth="2" stroke="currentColor" fill="none"/>
               </svg>
               복사
             </button>
           </div>
-          {/* 경도 */}
-          <div className="flex items-center mb-1">
-            <label className="text-sm text-gray-300 w-16 shrink-0 ml-1">경도</label>
-            <input
-              className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
-              value={selectedLocation ? selectedLocation.lng.toFixed(6) : ""}
-              readOnly
-            />
-          </div>
           {/* 지번주소 */}
           <div className="flex items-center mb-1">
-            <label className="text-sm text-gray-300 w-16 shrink-0 ml-1">지번주소</label>
+            <label className="text-sm text-gray-300 w-12 shrink-0">지번주소</label>
             <input
               className="text-base bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
               value={selectedLocation?.address || ""}
@@ -223,7 +220,7 @@ export default function Home() {
           </div>
           {/* 세부내역(2줄 textarea) */}
           <div className="flex items-start">
-            <label className="text-sm text-gray-300 w-16 shrink-0 ml-1 mt-2">세부내역</label>
+            <label className="text-sm text-gray-300 w-12 shrink-0 mt-2">세부내역</label>
             <textarea
               maxLength={100}
               rows={2}
