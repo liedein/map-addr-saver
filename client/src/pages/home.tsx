@@ -182,7 +182,7 @@ export default function Home() {
           <div className="flex items-stretch space-x-2">
             <div className="flex flex-col flex-1 space-y-2">
               <div className="flex items-center">
-                <label className="text-sm text-gray-300 w-20 shrink-0">위도</label>
+                <label className="text-sm text-gray-300 w-[76px] shrink-0">위도</label>
                 <input
                   className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1 min-w-[15rem] w-60"
                   value={selectedLocation ? selectedLocation.lat.toFixed(6) : ""}
@@ -190,7 +190,7 @@ export default function Home() {
                 />
               </div>
               <div className="flex items-center">
-                <label className="text-sm text-gray-300 w-20 shrink-0">경도</label>
+                <label className="text-sm text-gray-300 w-[76px] shrink-0">경도</label>
                 <input
                   className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1 min-w-[15rem] w-60"
                   value={selectedLocation ? selectedLocation.lng.toFixed(6) : ""}
@@ -217,7 +217,7 @@ export default function Home() {
             </button>
           </div>
           <div className="flex items-center mb-1">
-            <label className="text-sm text-gray-300 w-20 shrink-0">지번주소</label>
+            <label className="text-sm text-gray-300 w-[76px] shrink-0">지번주소</label>
             <input
               className="text-base bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
               value={selectedLocation?.address || ""}
@@ -226,7 +226,7 @@ export default function Home() {
             />
           </div>
           <div className="flex items-start">
-            <label className="text-sm text-gray-300 w-20 shrink-0 mt-2">세부내역</label>
+            <label className="text-sm text-gray-300 w-[76px] shrink-0 mt-2">세부내역</label>
             <textarea
               maxLength={100}
               rows={2}
