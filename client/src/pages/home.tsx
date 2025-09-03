@@ -147,10 +147,10 @@ export default function Home() {
 
         {/* 입력 폼 영역 */}
         <div className="bg-gray-800 border-t border-gray-700 pt-5 pb-4 px-2 flex flex-col space-y-3">
-          {/* 통신사/유형 드롭다운 (레이블 없이) */}
+          {/* 통신사/유형 드롭다운 (밝은회색 bg로 변경) */}
           <div className="flex items-center space-x-3">
             <select
-              className="bg-gray-700 text-gray-100 px-3 py-2 rounded-md flex-1"
+              className="bg-gray-100 text-gray-900 px-3 py-2 rounded-md flex-1"
               value={telco}
               onChange={e => setTelco(e.target.value)}
             >
@@ -160,7 +160,7 @@ export default function Home() {
               ))}
             </select>
             <select
-              className="bg-gray-700 text-gray-100 px-3 py-2 rounded-md flex-1"
+              className="bg-gray-100 text-gray-900 px-3 py-2 rounded-md flex-1"
               value={type}
               onChange={e => setType(e.target.value)}
             >
@@ -198,7 +198,7 @@ export default function Home() {
               style={{
                 fontSize: "1.15rem",
                 minWidth: "54px",
-                minHeight: "86px", // 위도+경도 입력창 합친 높이와 맞춤
+                minHeight: "86px",
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -218,16 +218,16 @@ export default function Home() {
               placeholder="위치를 선택해주세요"
             />
           </div>
-          {/* 세부내역(2줄 textarea) */}
+          {/* 세부내역(2줄 textarea, 밝은회색 bg, placeholder 삭제) */}
           <div className="flex items-start">
             <label className="text-sm text-gray-300 w-12 shrink-0 mt-2">세부내역</label>
             <textarea
               maxLength={100}
               rows={2}
-              className="text-base bg-gray-200 text-gray-800 px-3 py-2 rounded-md flex-1 resize-none"
+              className="text-base bg-gray-100 text-gray-900 px-3 py-2 rounded-md flex-1 resize-none"
               value={detail}
               onChange={e => setDetail(e.target.value)}
-              placeholder="최대 100자 입력 (2줄까지)"
+              placeholder="" // placeholder를 완전히 삭제
               style={{ minHeight: "3.2em", maxHeight: "4em" }}
             />
           </div>
