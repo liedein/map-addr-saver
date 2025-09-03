@@ -28,18 +28,8 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<ToastData | null>(null);
 
-  // 커스텀 훅에서 에러나면 fallback UI 필요
-  let currentLocation, isLoadingLocation, usageCount, isUsageLimitExceeded, refetchUsage;
-  try {
-    ({ currentLocation, isLoading: isLoadingLocation } = useGeolocation());
-    ({ usageCount, isUsageLimitExceeded, refetchUsage } = useUsageLimit());
-  } catch (e) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-gray-50 flex flex-col items-center justify-center">
-        <p>필수 정보를 불러올 수 없습니다.</p>
-      </div>
-    );
-  }
+  const { currentLocation, isLoading: isLoadingLocation } = useGeolocation();
+  const { usageCount, isUsageLimitExceeded, refetchUsage } = useUsageLimit();
 
   useEffect(() => {
     if (!selectedLocation && currentLocation) {
@@ -115,7 +105,6 @@ export default function Home() {
     window.location.reload();
   };
 
-  // **최소한의 로딩 표시**
   if (isLoading || isLoadingLocation) {
     return (
       <div className="min-h-screen bg-gray-900 text-gray-50 flex items-center justify-center">
@@ -189,20 +178,21 @@ export default function Home() {
               ))}
             </select>
           </div>
+          {/* 위도/경도 + 복사버튼 */}
           <div className="flex items-stretch space-x-2">
             <div className="flex flex-col flex-1 space-y-2">
               <div className="flex items-center">
-                <label className="text-sm text-gray-300 w-18 shrink-0">위도</label>
+                <label className="text-sm text-gray-300 w-20 shrink-0">위도</label>
                 <input
-                  className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
+                  className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1 min-w-[15rem] w-60"
                   value={selectedLocation ? selectedLocation.lat.toFixed(6) : ""}
                   readOnly
                 />
               </div>
               <div className="flex items-center">
-                <label className="text-sm text-gray-300 w-18 shrink-0">경도</label>
+                <label className="text-sm text-gray-300 w-20 shrink-0">경도</label>
                 <input
-                  className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
+                  className="text-base font-mono bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1 min-w-[15rem] w-60"
                   value={selectedLocation ? selectedLocation.lng.toFixed(6) : ""}
                   readOnly
                 />
@@ -227,7 +217,7 @@ export default function Home() {
             </button>
           </div>
           <div className="flex items-center mb-1">
-            <label className="text-sm text-gray-300 w-18 shrink-0">지번주소</label>
+            <label className="text-sm text-gray-300 w-20 shrink-0">지번주소</label>
             <input
               className="text-base bg-gray-700 px-3 py-2 rounded-md text-gray-100 flex-1"
               value={selectedLocation?.address || ""}
@@ -236,7 +226,7 @@ export default function Home() {
             />
           </div>
           <div className="flex items-start">
-            <label className="text-sm text-gray-300 w-18 shrink-0 mt-2">세부내역</label>
+            <label className="text-sm text-gray-300 w-20 shrink-0 mt-2">세부내역</label>
             <textarea
               maxLength={100}
               rows={2}
