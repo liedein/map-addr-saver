@@ -11,12 +11,13 @@ const typeOptions = ["단독시설", "불법시설물", "특이동향"];
 export interface LocationData {
   lat: number;
   lng: number;
-  address: string;
+  address?: string;
 }
 
 export interface ToastData {
   message: string;
   type: "success" | "error";
+  isVisible: boolean;
 }
 
 export default function Home() {
@@ -26,32 +27,62 @@ export default function Home() {
   const [detail, setDetail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<ToastData | null>(null);
-  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [usageCount, incrementUsage] = useUsageLimit();
+
+  // 커스텀 훅에서 에러나면 fallback UI 필요
+  let currentLocation, isLoadingLocation, usageCount, isUsageLimitExceeded, refetchUsage;
+  try {
+    ({ currentLocation, isLoading: isLoadingLocation } = useGeolocation());
+    ({ usageCount, isUsageLimitExceeded, refetchUsage } = useUsageLimit());
+  } catch (e) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-gray-50 flex flex-col items-center justify-center">
+        <p>필수 정보를 불러올 수 없습니다.</p>
+      </div>
+    );
+  }
+
+  useEffect(() => {
+    if (!selectedLocation && currentLocation) {
+      setSelectedLocation(currentLocation);
+    }
+  }, [currentLocation, selectedLocation]);
 
   const showToast = (message: string, type: "success" | "error") => {
-    setToast({ message, type });
+    setToast({ message, type, isVisible: true });
     setTimeout(() => setToast(null), 2000);
   };
 
-  const handleLocationSelect = async (loc: { lat: number; lng: number }) => {
+  const handleLocationSelect = async (location: LocationData) => {
+    if (isUsageLimitExceeded) {
+      showToast("오늘 조회 한도(100회)에 도달했습니다.", "error");
+      return;
+    }
+
     setIsLoading(true);
+
     try {
-      const res = await fetch("/api/coord-to-addr", {
+      const response = await fetch("/api/coordinate-to-address", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(loc),
+        body: JSON.stringify({ lat: location.lat, lng: location.lng }),
       });
-      const data = await res.json();
-      if (data?.address) {
-        setSelectedLocation({ ...loc, address: data.address });
-        incrementUsage();
-      } else {
-        showToast("주소를 찾을 수 없습니다.", "error");
-        setSelectedLocation({ ...loc, address: "" });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "주소를 가져오는데 실패했습니다.");
       }
-    } catch (err) {
-      showToast("주소 변환 오류", "error");
+
+      const data = await response.json();
+      setSelectedLocation({
+        lat: location.lat,
+        lng: location.lng,
+        address: data.address,
+      });
+
+      refetchUsage();
+    } catch (error) {
+      console.error("주소 변환 오류:", error);
+      showToast(error instanceof Error ? error.message : "주소를 가져오는데 실패했습니다.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -80,35 +111,42 @@ export default function Home() {
     }
   };
 
-  // 현위치 가져오기 (최초 1회)
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          setCurrentLocation({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          });
-        },
-        err => {
-          showToast("위치 권한이 필요합니다.", "error");
-        }
-      );
-    }
-  }, []);
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
+  // **최소한의 로딩 표시**
+  if (isLoading || isLoadingLocation) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-400 mr-3"></div>
+        <span>불러오는 중...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col">
-      <header className="bg-gray-900 border-b border-gray-800 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-white tracking-tight">내 주변 주소 조회</h1>
-        <button
-          className="text-gray-400 hover:text-white transition"
-          onClick={() => window.location.reload()}
-          aria-label="새로고침"
-        >
-          <RefreshCw className="w-5 h-5" />
-        </button>
+    <div className="min-h-screen bg-gray-900 text-gray-50 flex flex-col">
+      {/* 헤더 */}
+      <header className="bg-gray-800 shadow-lg border-b border-gray-700">
+        <div className="flex w-full items-center px-4 py-4">
+          <div className="w-12" />
+          <h1 className="text-2xl font-bold text-gray-50 flex-grow text-center tracking-wide">
+            내 주변 주소 조회
+          </h1>
+          <div className="w-12 flex justify-end">
+            <button
+              onClick={handleRefresh}
+              className="p-2 text-gray-400 hover:text-gray-100 hover:bg-gray-700 rounded-lg transition-colors duration-200"
+              title="새로고침"
+            >
+              <RefreshCw className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
       </header>
+
+      {/* 본문 */}
       <main className="flex-1 flex flex-col relative">
         {/* 지도 영역 */}
         <div className="relative" style={{ height: "38vh", minHeight: "270px" }}>
@@ -116,7 +154,7 @@ export default function Home() {
             initialLocation={currentLocation}
             selectedLocation={selectedLocation}
             onLocationSelect={handleLocationSelect}
-            isLoading={isLoading}
+            isLoading={isLoading || isLoadingLocation}
           />
           {selectedLocation?.address && (
             <div className="absolute bottom-4 left-4 bg-gray-800/90 backdrop-blur-sm border border-gray-700 rounded-lg px-3 py-2 max-w-xs shadow-lg">
@@ -129,7 +167,6 @@ export default function Home() {
 
         {/* 입력 폼 영역 */}
         <div className="bg-gray-800 border-t border-gray-700 pt-5 pb-4 px-2 flex flex-col space-y-3">
-          {/* 통신사/유형 드롭다운 (밝은회색 bg로 변경) */}
           <div className="flex items-center space-x-3">
             <select
               className="bg-gray-100 text-gray-900 px-3 py-2 rounded-md flex-1"
@@ -152,7 +189,6 @@ export default function Home() {
               ))}
             </select>
           </div>
-          {/* 위도/경도 + 복사버튼 */}
           <div className="flex items-stretch space-x-2">
             <div className="flex flex-col flex-1 space-y-2">
               <div className="flex items-center">
@@ -190,7 +226,6 @@ export default function Home() {
               복사
             </button>
           </div>
-          {/* 지번주소 */}
           <div className="flex items-center mb-1">
             <label className="text-sm text-gray-300 w-18 shrink-0">지번주소</label>
             <input
@@ -200,7 +235,6 @@ export default function Home() {
               placeholder="위치를 선택해주세요"
             />
           </div>
-          {/* 세부내역(2줄 textarea, 밝은회색 bg, placeholder 삭제) */}
           <div className="flex items-start">
             <label className="text-sm text-gray-300 w-18 shrink-0 mt-2">세부내역</label>
             <textarea
@@ -209,7 +243,7 @@ export default function Home() {
               className="text-base bg-gray-100 text-gray-900 px-3 py-2 rounded-md flex-1 resize-none"
               value={detail}
               onChange={e => setDetail(e.target.value)}
-              placeholder="" // placeholder를 완전히 삭제
+              placeholder=""
               style={{ minHeight: "3.2em", maxHeight: "4em" }}
             />
           </div>
