@@ -158,7 +158,7 @@ export default function Home() {
         <div className="bg-gray-800 border-t border-gray-700 pt-5 pb-4 px-2 flex flex-col space-y-3">
           <div className="flex items-center space-x-3">
             <select
-              className="bg-gray-100 text-gray-900 px-3 py-2 rounded-md flex-1"
+              className="bg-gray-100 text-gray-900 text-sm px-3 py-2 rounded-md flex-1"
               value={telco}
               onChange={e => setTelco(e.target.value)}
             >
@@ -168,7 +168,7 @@ export default function Home() {
               ))}
             </select>
             <select
-              className="bg-gray-100 text-gray-900 px-3 py-2 rounded-md flex-1"
+              className="bg-gray-100 text-gray-900 text-sm px-3 py-2 rounded-md flex-1"
               value={type}
               onChange={e => setType(e.target.value)}
             >
