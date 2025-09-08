@@ -48,8 +48,6 @@ export default function Home() {
       return;
     }
 
-    setIsLoading(true);
-
     try {
       const response = await fetch("/api/coordinate-to-address", {
         method: "POST",
@@ -73,9 +71,7 @@ export default function Home() {
     } catch (error) {
       console.error("주소 변환 오류:", error);
       showToast(error instanceof Error ? error.message : "주소를 가져오는데 실패했습니다.", "error");
-    } finally {
-      setIsLoading(false);
-    }
+    } 
   };
 
   const handleCopyToClipboard = async () => {
@@ -104,15 +100,6 @@ export default function Home() {
   const handleRefresh = () => {
     window.location.reload();
   };
-
-  if (isLoading || isLoadingLocation) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-400 mr-3"></div>
-        <span>불러오는 중...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-50 flex flex-col">
